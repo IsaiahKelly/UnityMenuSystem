@@ -35,7 +35,7 @@ public class MenuManager : MonoBehaviour
 
 	public void OpenMenu(Menu instance)
     {
-        // De-activate top menu
+        // Disable any active menus.
         if (menuStack.Count > 0)
         {
 			if (instance.DisableMenusUnderneath)
@@ -49,9 +49,8 @@ public class MenuManager : MonoBehaviour
 				}
 			}
 
-            var topCanvas = instance.GetComponent<Canvas>();
-            var previousCanvas = menuStack.Peek().GetComponent<Canvas>();
-			topCanvas.sortingOrder = previousCanvas.sortingOrder + 1;
+            // Place new menu above all others.
+            transform.SetAsLastSibling();
         }
 
         menuStack.Push(instance);
