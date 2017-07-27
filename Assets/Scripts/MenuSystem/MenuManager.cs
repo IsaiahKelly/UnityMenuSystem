@@ -7,12 +7,9 @@ public class MenuManager : MonoBehaviour
     private bool PreloadMenus = false;
     private Stack<Menu> menuStack = new Stack<Menu>();
 
-    public static MenuManager Instance
-    {
-        get; set;
-    }
+    public static MenuManager Instance { get; set; }
 
-    void Awake()
+    private void Awake()
     {
         if (PreloadMenus)
         {
