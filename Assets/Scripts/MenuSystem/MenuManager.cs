@@ -3,7 +3,8 @@ using UnityEngine;
 
 public class MenuManager : MonoBehaviour
 {
-    private bool loaded = false; // Check to see if resources are already loaded.
+    [SerializeField]
+    private bool PreloadMenus = false;
     private Stack<Menu> menuStack = new Stack<Menu>();
 
     public static MenuManager Instance
@@ -11,8 +12,13 @@ public class MenuManager : MonoBehaviour
         get; set;
     }
 
-    private void Awake()
+    void Awake()
     {
+        if (PreloadMenus)
+        {
+            LoadAllMenuResources();
+        }
+
         Instance = this;
         MainMenu.Show(); // Open MainMenu on startup.
     }
@@ -22,25 +28,19 @@ public class MenuManager : MonoBehaviour
         Instance = null;
     }
 
-    private void LoadMenuResources()
+    // Loads all menu prefabs from "Resources/Menus".
+    private void LoadAllMenuResources()
     {
-        if (loaded) return;
-
-        // Probably a better way to do this, but right now I need to load everything
-        // to prevent null references when using Resources.FindObjectsOfTypeAll later.
-        var menus = Resources.LoadAll("Menus", typeof(Menu));
-
+        var menus = Resources.LoadAll<Menu>("Menus");
         foreach (var m in menus)
         {
-            Debug.Log("Loaded resource: " + m.name);
+            Debug.Log("Loaded: " + m.name + " Prefab");
         }
-
-        loaded = true;
     }
 
     public void CreateInstance<T>() where T : Menu
     {
-        var prefab = GetMenuPrefab<T>();
+        var prefab = GetMenuPrefab<T>().gameObject;
 
         Instantiate(prefab, transform);
     }
@@ -68,19 +68,30 @@ public class MenuManager : MonoBehaviour
         menuStack.Push(instance);
     }
 
-    private GameObject GetMenuPrefab<T>() where T : Menu
+    private T GetMenuPrefab<T>() where T : Menu
     {
-        LoadMenuResources();
-        T[] menuPrefabs = Resources.FindObjectsOfTypeAll<T>();
-        if (menuPrefabs.Length > 0)
+        Object[] prefabs;
+        if (PreloadMenus)
         {
-            if (menuPrefabs.Length > 1)
-                Debug.LogWarning("There is more then one prefab for type " + typeof(T) + ". Using first one found.");
-
-            return menuPrefabs[0].gameObject;
+            prefabs = Resources.FindObjectsOfTypeAll<T>();
+        }
+        else
+        {
+            prefabs = Resources.LoadAll<T>("Menus");
         }
 
-        throw new MissingReferenceException("No prefab for type " + typeof(T) + " found. Please create one.");
+        if (prefabs.Length > 0)
+        {
+            if (prefabs.Length > 1)
+                Debug.LogWarning("More then one prefab of type " + typeof(T) + " exist. Using first one found.");
+
+            if (!PreloadMenus)
+                Debug.Log("Loaded " + prefabs[0].name + " prefab");
+
+            return (T)prefabs[0];
+        }
+
+        throw new MissingReferenceException("No prefab of type " + typeof(T) + " found in 'Resources/Menus' folder. Please add one.");
     }
 
     public void CloseMenu(Menu menu)
@@ -98,6 +109,9 @@ public class MenuManager : MonoBehaviour
         }
 
         CloseTopMenu();
+
+        // For memory optimization.
+        if (!PreloadMenus) Resources.UnloadUnusedAssets();
     }
 
     public void CloseTopMenu()
