@@ -6,12 +6,6 @@ public class MenuManager : MonoBehaviour
 {
     public Menu[] menus;
 
-	public MainMenu MainMenuPrefab;
-	public GameMenu GameMenuPrefab;
-	public PauseMenu PauseMenuPrefab;
-	public OptionsMenu OptionsMenuPrefab;
-	public AwesomeMenu AwesomeMenuPrefab;
-
     private Stack<Menu> menuStack = new Stack<Menu>();
 
     public static MenuManager Instance { get; set; }
