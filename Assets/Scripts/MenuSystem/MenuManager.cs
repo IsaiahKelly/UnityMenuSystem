@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class MenuManager : MonoBehaviour
 {
+    public Menu[] menus;
+
 	public MainMenu MainMenuPrefab;
 	public GameMenu GameMenuPrefab;
 	public PauseMenu PauseMenuPrefab;
@@ -59,16 +61,11 @@ public class MenuManager : MonoBehaviour
 
     private T GetPrefab<T>() where T : Menu
     {
-        // Get prefab dynamically, based on public fields set from Unity
-		// You can use private fields with SerializeField attribute too
-        var fields = this.GetType().GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-        foreach (var field in fields)
+        // Search menus array for matching type.
+        for (int i = 0; i < menus.Length; i++)
         {
-            var prefab = field.GetValue(this) as T;
-            if (prefab != null)
-            {
-                return prefab;
-            }
+            if (menus[i] is T)
+                return (T)menus[i];
         }
 
         throw new MissingReferenceException("Prefab not found for type " + typeof(T));
