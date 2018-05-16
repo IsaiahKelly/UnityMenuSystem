@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
-using System.Reflection;
 using UnityEngine;
 
 public class MenuManager : MonoBehaviour
 {
-    public Menu[] menus;
+    [SerializeField]
+    private Menu startMenu;
 
     private Stack<Menu> menuStack = new Stack<Menu>();
 
@@ -14,20 +14,14 @@ public class MenuManager : MonoBehaviour
     {
         Instance = this;
 
-		MainMenu.Show();
+        if (startMenu)
+            startMenu.Open ();
     }
 
     private void OnDestroy()
     {
         Instance = null;
     }
-
-	public void CreateInstance<T>() where T : Menu
-	{
-		var prefab = GetPrefab<T>();
-
-		Instantiate(prefab, transform);
-	}
 
 	public void OpenMenu(Menu instance)
     {
@@ -50,21 +44,10 @@ public class MenuManager : MonoBehaviour
 			topCanvas.sortingOrder = previousCanvas.sortingOrder + 1;
         }
 
+        instance.gameObject.SetActive (true);
         menuStack.Push(instance);
     }
 
-    private T GetPrefab<T>() where T : Menu
-    {
-        // Search menus array for matching type.
-        for (int i = 0; i < menus.Length; i++)
-        {
-            if (menus[i] is T)
-                return (T)menus[i];
-        }
-
-        throw new MissingReferenceException("Prefab not found for type " + typeof(T));
-    }
-	
 	public void CloseMenu(Menu menu)
 	{
 		if (menuStack.Count == 0)
@@ -86,9 +69,9 @@ public class MenuManager : MonoBehaviour
     {
         var instance = menuStack.Pop();
 
-		if (instance.DestroyWhenClosed)
-        	Destroy(instance.gameObject);
-		else
+		//if (instance.DestroyWhenClosed)
+  //      	Destroy(instance.gameObject);
+		//else
 			instance.gameObject.SetActive(false);
 
         // Re-activate top menu
@@ -104,10 +87,10 @@ public class MenuManager : MonoBehaviour
 
     private void Update()
     {
-        // On Android the back button is sent as Esc
+        // Menu escape key.
         if (Input.GetKeyDown(KeyCode.Escape) && menuStack.Count > 0)
         {
-            menuStack.Peek().OnBackPressed();
+            menuStack.Peek ().GoBack ();
         }
     }
 }

@@ -1,53 +1,56 @@
 ﻿using UnityEngine;
+using UnityEngine.Events;
 
-public abstract class Menu<T> : Menu where T : Menu<T>
+public class Menu : MonoBehaviour
 {
-    public static T Instance { get; private set; }
+    [Tooltip("Destroy game object when closed.")]
+    public bool DestroyWhenClosed = true;
 
-    protected virtual void Awake()
-    {
-        Instance = (T)this;
+    [Tooltip("Disable all menus under this one.")]
+    public bool DisableMenusUnderneath = true;
+
+    public UnityEvent OnOpen;
+    public UnityEvent OnClose;
+    public UnityEvent OnBack;
+
+    public virtual void Open ()
+	{
+        gameObject.SetActive(true);
+		MenuManager.Instance.OpenMenu(this);
+
+        if (OnOpen != null)
+            OnOpen.Invoke ();
     }
 
-    protected virtual void OnDestroy()
+    public virtual void Close ()
+	{
+        if (OnClose != null)
+            OnClose.Invoke ();
+
+        MenuManager.Instance.CloseMenu(this);
+	}
+
+    public virtual void GoTo (Menu menu)
     {
-        Instance = null;
-	}
+        MenuManager.Instance.OpenMenu (menu);
+    }
 
-	protected static void Open()
+    /// <summary>
+    /// Called on escape key or back button.
+    /// </summary>
+    public virtual void GoBack()
 	{
-		if (Instance == null)
-			MenuManager.Instance.CreateInstance<T>();
-		else
-			Instance.gameObject.SetActive(true);
-		
-		MenuManager.Instance.OpenMenu(Instance);
+        if (OnBack != null)
+            OnBack.Invoke ();
 	}
 
-	protected static void Close()
-	{
-		if (Instance == null)
-		{
-			Debug.LogErrorFormat("Trying to close menu {0} but Instance is null", typeof(T));
-			return;
-		}
-
-		MenuManager.Instance.CloseMenu(Instance);
-	}
-
-	public override void OnBackPressed()
-	{
-		Close();
-	}
-}
-
-public abstract class Menu : MonoBehaviour
-{
-	[Tooltip("Destroy the Game Object when menu is closed (reduces memory usage)")]
-	public bool DestroyWhenClosed = true;
-
-	[Tooltip("Disable menus that are under this one in the stack")]
-	public bool DisableMenusUnderneath = true;
-
-	public abstract void OnBackPressed();
+    public void Quit ()
+    {
+#if UNITY_EDITOR
+        // Exit play mode if in the editor.
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+			Application.Quit();
+#endif
+    }
 }
